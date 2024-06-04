@@ -1,114 +1,103 @@
-import random 
+import random  
+import numpy as np  
 
-lista_pudelek = [
-    (3, 3),
-    (6, 5),
-    (5, 8),
-    (7, 2),
-    (9, 7),
-    (2, 4),
-    (3, 1),
-    (6, 6),
-    (7, 4),
-    (1, 2)
-]
+#Wymiary kontenera
+W, H = 50, 50  # Okreslenie wymiarow kontenera
+container_area = W * H  # Obliczenie calkowitej powierzchni kontenera
 
-#kontener
-wysokosc_kontenera = 14
-szerokosc_kontenera = 10
+box_dimensions = []  # Inicjalizacja pustej listy na wymiary pudelek
 
-
-def policz_pudelka_i_pole(pudelka):
-    #liczba pudelek
-    liczba_pudelek = len(pudelka)
-    
-    #laczne pole pudelek
-    pola_pudelek = 0
-    for pudelko in pudelka:
-        wysokosc_pudelka, szerokosc_pudelka = pudelko
-        pole = pudelko[0] * pudelko[1]
-        pola_pudelek += pole
-    
-    return liczba_pudelek, pola_pudelek
-
-
-#wymiana losowego pudelka z kontenera na pudelko poza kontenerem
-def mutacja(pudelka_zawarte, pudelka_niezawarte, wysokosc_kontenera, szerokosc_kontenera):
-    #losowanie pudelka z kontenera i dodanie go do listy pudelek poza kontenerem
-    if pudelka_zawarte:
-        pudelko_przeniesione = random.choice(pudelka_zawarte)
-        pudelka_zawarte.remove(pudelko_przeniesione)
-        pudelka_niezawarte.append(pudelko_przeniesione)
-    
-    #losowanie pudelka, które nie jest w kontenerze i umieszczenie go w kontenerze
-    if pudelka_niezawarte:
-        pudelko_do_umieszczenia = random.choice(pudelka_niezawarte)
-        wysokosc_pudelka, szerokosc_pudelka = pudelko_do_umieszczenia
-        #x = random.randint(0, szerokosc_kontenera - szerokosc_pudelka)
-        #y = random.randint(0, wysokosc_kontenera - wysokosc_pudelka)
-        #pozycja = (x, y)
-        
-        #sprawdzenie czy pudelko zmiesci sie do kontenera i czy nie wchodzi na inne pudelka
-        #TODO: sprawdzic czy ten warunek dziala
-        while not (
-            x + szerokosc_pudelka <= szerokosc_kontenera and
-            y + wysokosc_pudelka <= wysokosc_kontenera and
-            all(not (
-                p[0][0] < x + szerokosc_pudelka and
-                p[1][0] > x and
-                p[0][1] < y + wysokosc_pudelka and
-                p[1][1] > y
-            ) for p in pudelka_zawarte)
-        ):
-            x = random.randint(0, szerokosc_kontenera - szerokosc_pudelka)
-            y = random.randint(0, wysokosc_kontenera - wysokosc_pudelka)
-            pozycja = (x, y)
-        
-        #dodanie pudelka jesli warunek jest spelniony
-        pudelka_zawarte.append((pozycja, (x + szerokosc_pudelka, y + wysokosc_pudelka)))
-        
-        # usuniecie pudelka
-        pudelka_niezawarte.remove(pudelko_do_umieszczenia)
-
-    return pudelka_zawarte, pudelka_niezawarte
-
-
-# zamiana miejscami dwoch sasiadujacych pudelek w kontenerze
-def crossover(pudelka_zawarte):
-    #kopia pilsty zeby nie modyfikowac narazie oryginalu
-    nowe_pudelka_zawarte = pudelka_zawarte[:]
-    
-    #czy conajmniej 2 pudelka w kontenerze
-    if len(nowe_pudelka_zawarte) < 2:
-        return nowe_pudelka_zawarte
-    
-    #losujemy indeks pudelka
-    indeks_1 = random.randint(0, len(nowe_pudelka_zawarte) - 2)
-    
-    #indeks nastepnego pudelka
-    indeks_2 = indeks_1 + 1
-    
-    # TODO: sprawdzenie czy zamiana miejscami wylosowanych pudelek jest mozliwa, czy nie beda na siebie nachodzic
-
-    #zamiana miejscami
-    nowe_pudelka_zawarte[indeks_1], nowe_pudelka_zawarte[indeks_2] = nowe_pudelka_zawarte[indeks_2], nowe_pudelka_zawarte[indeks_1]
-    
-    return nowe_pudelka_zawarte
-
-def init_population(pop_size, box_width, box_height, num_items):
-    population = []
-    for _ in range(pop_size):
-        individual = [box_width, box_height]  # Rozmiary pudełka na początek
-        for _ in range(num_items):
-            individual.append(random.randint(0, 1))  # Losowy wybór przedmiotu (1 - wybrany, 0 - niewybrany)
-            if individual[-1] == 1:  # Jeśli przedmiot jest wybrany
-                item_width, item_height = items[_][0], items[_][1]
-                if random.random() < 0.5:  # 50% szans na obrócenie przedmiotu
-                    item_width, item_height = item_height, item_width
-                individual.append(item_width)  # Szerokość przedmiotu
-                individual.append(item_height)  # Wysokość przedmiotu
+# Otwarcie pliku 'm3e.txt' do odczytu
+with open('m3e.txt', 'r') as file:
+    width = None
+    # Iteracja przez kazda linie w pliku
+    for line in file:
+        # Podzielenie linii na poszczegolne wartosci i usuniecie bialych znakow
+        values = line.strip().split()
+        for value in values:
+            dimension = int(value)  # Konwersja wartosci na liczbe calkowita
+            if width is None:
+                width = dimension  # Jesli szerokosc jeszcze nie zostala ustawiona, ustaw ja
             else:
-                individual.extend([0, 0])  # Szerokość i wysokość nie mają znaczenia, gdy przedmiot nie jest wybrany
-        population.append(individual)
-    return population
+                height = dimension  # W przeciwnym razie ustaw wysokosc
+                box_dimensions.append((width, height))  # Dodaj pudelko do listy wymiarow pudelek
+                width = None  # Zresetuj szerokosc na kolejna iteracje
+
+print(box_dimensions)  # Wydrukuj wymiary pudelek
+
+# Funkcja pomocnicza do sprawdzania, czy pudelko moze byc umieszczone na danej pozycji
+def can_place_box(box, position, packed_boxes):
+    w, h = box  # Szerokosc i wysokosc pudelka
+    x, y = position  # Pozycja pudelka
+    if x + w > W or y + h > H:
+        return False  # Pudelko wychodzi poza granice kontenera
+    for other_box, other_pos in packed_boxes:
+        other_w, other_h = other_box
+        other_x, other_y = other_pos
+        if not (x + w <= other_x or x >= other_x + other_w or y + h <= other_y or y >= other_y + other_h):
+            return False  # Pudelka zachodza na siebie
+    return True
+
+# Funkcja do oceny rozwiazania
+def evaluate_solution(solution):
+    packed_boxes = []  # Lista umieszczonych pudelek
+    total_area = 0  # Calkowita powierzchnia zajeta przez pudelka
+    for box, position in solution:
+        if can_place_box(box, position, packed_boxes):
+            packed_boxes.append((box, position))  # Dodaj pudelko do listy umieszczonych pudelek
+            total_area += box[0] * box[1]  # Dodaj powierzchnie pudelka do calkowitej powierzchni
+    return len(packed_boxes), total_area  # Zwroc liczbe umieszczonych pudelek i calkowita zajeta powierzchnie
+
+# Generowanie poczatkowego losowego rozwiazania
+def generate_random_solution():
+    solution = []  # Inicjalizacja pustego rozwiazania
+    for box in box_dimensions:
+        x = random.randint(0, W - box[0])  # Losowy x
+        y = random.randint(0, H - box[1])  # Losowy y
+        solution.append((box, (x, y)))  # Dodaj pudelko z losowa pozycja do rozwiazania
+    return solution
+
+# Operator mutacji
+def mutate(solution):
+    if random.random() < 0.1:  # Szansa mutacji
+        index = random.randint(0, len(solution) - 1)  # Losowy indeks pudelka do zmutowania
+        box = solution[index][0]  # Wybierz pudelko
+        x = random.randint(0, W - box[0])  # Nowe losowe x
+        y = random.randint(0, H - box[1])  # Nowe losowe y
+        solution[index] = (box, (x, y))  # Zmutuj pudelko
+
+# Algorytm genetyczny
+def genetic_algorithm(population_size=100, generations=1000):
+    # Inicjalizacja populacji
+    population = [generate_random_solution() for _ in range(population_size)]  # Generowanie poczatkowej populacji losowych rozwiazań
+    best_solution = None  # Inicjalizacja zmiennej przechowujacej najlepsze rozwiazanie
+    best_fitness = (-1, -1)  # Inicjalizacja zmiennej przechowujacej najlepszy wynik fitness
+
+    for generation in range(generations):  # Petla iterujaca po kolejnych pokoleniach
+        # Ocena fitnessu
+        fitnesses = [evaluate_solution(ind) for ind in population]  # Ocena fitnessu dla kazdego rozwiazania w populacji
+
+        # Wybierz najlepsze rozwiazanie
+        for ind, fitness in zip(population, fitnesses):  # Iteracja po populacji i odpowiadajacym jej wynikom fitness
+            if fitness[0] >= best_fitness[0]:  # Jesli liczba pudelek jest wieksza lub rowna najlepszemu dotychczasowemu wynikowi
+                if fitness[1] >= best_fitness[1]:  # Jesli zajeta powierzchnia jest wieksza lub rowna najlepszemu dotychczasowemu wynikowi
+                    best_solution = ind  # Aktualizacja najlepszego rozwiazania
+                    best_fitness = fitness  # Aktualizacja najlepszego wyniku fitness
+
+        # Selekcja
+        selected_parents = random.choices(population, weights=[f[0] + f[1] for f in fitnesses], k=population_size)  # Wybor rodzicow na podstawie ich wynikow fitness
+
+        # Mutacja i budowanie nowej populacji
+        new_population = []  # Inicjalizacja nowej populacji
+        for parent in selected_parents:  # Iteracja po wybranych rodzicach
+            mutated_child = parent[:]  # Kopia rodzica
+            mutate(mutated_child)  # Mutacja dziecka
+            new_population.append(mutated_child)  # Dodanie zmutowanego dziecka do nowej populacji
+
+        population = new_population  # Aktualizacja populacji na nowa populacje
+
+        print(f'Generation {generation}: Best Fitness {best_fitness}')  # Wydruk informacji o aktualnym pokoleniu i najlepszym wyniku fitness
+
+    return best_solution, best_fitness  # Zwrocenie najlepszego rozwiazania i jego wyniku fitness
+
 
