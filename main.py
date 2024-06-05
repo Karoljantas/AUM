@@ -131,7 +131,20 @@ def genetic_algorithm(population_size=100, generations=1000):
         #wyswietlenie informacji o aktualnej generacji i najelpszym uzyskanym dopasowaniu (wyniku)
         print(f'Generation {generation}: Best Fitness {best_fitness}')
     return best_solution, best_fitness
+
 best_solution, best_fitness = genetic_algorithm()
 print("Best fitness: ",best_fitness)
 
+def packed_boxes(best_solution):
+    packed_boxes = []  
+    total_area = 0  
+    for box, position in best_solution:
+        if can_place_box(box, position, packed_boxes):
+            packed_boxes.append((box, position)) 
+            total_area += box[0] * box[1]
+    return len(packed_boxes), total_area, packed_boxes
 
+num_of_boxes, area, placed_boxes = packed_boxes(best_solution)
+
+
+print("Packed boxes: ", placed_boxes)
